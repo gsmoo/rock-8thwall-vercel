@@ -1,0 +1,12 @@
+{
+  "name": "rock-8thwall-vercel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static Vercel build of the recovered 8th Wall A-Frame WebAR project.",
+  "scripts": {
+    "build": "npm run check",
+    "check": "node --check src/app.standalone.js && node --check src/component.js && node --check src/confetti.js && node --check src/texture-pulse.js",
+    "serve": "node serve.mjs",
+    "serve:lan": "HOST=0.0.0.0 node serve.mjs"
+  }
+}

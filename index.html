@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Rock AR Experience</title>
+
+  <link rel="stylesheet" href="./src/index.css">
+
+  <script src="./src/vendor/8frame-1.4.1.min.js"></script>
+  <script src="./src/vendor/xrextras.js"></script>
+  <script src="./src/vendor/landing-page.js"></script>
+  <script src="./src/vendor/aframe-extras-6.1.1.min.js"></script>
+  <script src="./src/vendor/dev8.js"></script>
+  <script src="./src/vendor/xr.js" async crossorigin="anonymous" data-preload-chunks="slam"></script>
+
+  <script type="module" src="./src/app.standalone.js?v=animation-20260625a"></script>
+</head>
+<body>
+  <label id="uploadBtn" for="file" class="custom-upload" style="display: none">Add Video</label>
+  <input id="file" type="file" name="filename" accept="video/*">
+
+  <div id="splashimage">
+    <div id="start" style="display: none;">
+      <h2>¡Empecemos!</h2>
+    </div>
+  </div>
+
+  <a-scene
+    xrextras-gesture-detector
+    landing-page
+    xrextras-loading
+    splash-image
+    custom-capture-btn
+    xrextras-runtime-error
+    set-exposure="0.5"
+    renderer="antialias: true; colorManagement: true; physicallyCorrectLights: true; shadowMap: true"
+    xrweb="allowedDevices: any">
+
+    <a-assets>
+      <a-asset-item id="rock" src="src/assets/rock_preview_external_textures.glb"></a-asset-item>
+
+      <video id="vid-mat" muted autoplay playsinline loop="true" crossorigin="anonymous"
+        src="./src/assets/video/Mat_Screen.mp4">
+      </video>
+
+      <img id="tx1" src="src/assets/tx1.svg" crossorigin="anonymous">
+      <img id="tx2" src="src/assets/tx2.svg" crossorigin="anonymous">
+      <img id="tx3" src="src/assets/tx3.svg" crossorigin="anonymous">
+      <img id="tx4" src="src/assets/tx4.svg" crossorigin="anonymous">
+    </a-assets>
+
+    <xrextras-capture-button capture-mode="photo"></xrextras-capture-button>
+    <xrextras-capture-config
+      request-mic="false"
+      file-name-prefix="FelicesFiestas Accenture -">
+    </xrextras-capture-config>
+    <xrextras-capture-preview></xrextras-capture-preview>
+
+    <a-camera
+      id="camera"
+      near="0.05"
+      far="1000"
+      position="0 15 50"
+      raycaster="objects: .cantap"
+      cursor="fuse: false; rayOrigin: mouse;">
+    </a-camera>
+
+    <a-entity
+      light="type: directional;
+             intensity: 0;
+             castShadow: true;
+             shadowMapHeight: 2048;
+             shadowMapWidth: 2048;
+             shadowCameraTop: 100;
+             shadowCameraBottom: -100;
+             shadowCameraLeft: -100;
+             shadowCameraRight: 100;
+             shadowCameraNear: 0.1;
+             shadowCameraFar: 100;
+             shadowBias: -0.0001;
+             shadowRadius: 1;
+             target: #model;"
+      xrextras-attach="target: model; offset: 15 25 10;"
+      shadow>
+    </a-entity>
+
+    <a-light type="ambient" intensity="0.0"></a-light>
+
+    <xrextras-named-image-target name="qr-code" model-spawn></xrextras-named-image-target>
+  </a-scene>
+</body>
+</html>
