@@ -175,13 +175,24 @@ const modelSpawnComponent = {
         // ✅ VINCULAR el mesh al entity para el raycaster
         const mesh = model.getObject3D('mesh');
         if (mesh) {
+          const skinnedBaseNames = new Set();
+
+          mesh.traverse((node) => {
+            if (node.isSkinnedMesh) {
+              skinnedBaseNames.add(node.name.replace(/\.001$/, ''));
+              node.visible = true;
+            }
+          });
+
           mesh.traverse((node) => {
             if (node.isMesh) {
+              if (!node.isSkinnedMesh && skinnedBaseNames.has(node.name)) {
+                node.visible = false;
+                return;
+              }
+
               node.userData.aframeEntity = model;
               node.raycast = THREE.Mesh.prototype.raycast;
-              node.onBeforeRender = () => {
-                node.visible = true;
-              };
               console.log(`✅ Mesh "${node.name}" vinculado y raycast habilitado`);
             }
           });
