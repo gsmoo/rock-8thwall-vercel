@@ -27,21 +27,24 @@ AFRAME.registerComponent('play-model-animation', {
   init() {
     this.mixer = null;
     this.actions = [];
+    this.lastDebugTime = 0;
     this.onModelLoaded = this.onModelLoaded.bind(this);
     this.el.addEventListener('model-loaded', this.onModelLoaded);
   },
 
   onModelLoaded(event) {
     const root = event.detail?.model || this.el.getObject3D('mesh');
-    const clips = root?.animations || [];
-    const selectedClips = clips.filter((clip) => clip.name === this.data.clip);
-
-    console.log('🎞 Animation clips detected:', clips.map((clip) => `${clip.name} (${clip.tracks?.length || 0} tracks)`).join(', ') || 'none');
-
     if (!root) {
       console.warn('⚠️ Model root not found for animation.');
       return;
     }
+
+    this.prepareAnimatedMeshes(root);
+
+    const clips = this.getAnimationClips(root);
+    const selectedClips = this.selectClips(clips);
+
+    console.log('🎞 Animation clips detected:', clips.map((clip) => `${clip.name} (${clip.tracks?.length || 0} tracks)`).join(', ') || 'none');
 
     if (!selectedClips.length) {
       console.warn(`⚠️ Animation "${this.data.clip}" not found. No model animation started.`);
@@ -50,7 +53,7 @@ AFRAME.registerComponent('play-model-animation', {
 
     this.mixer = new THREE.AnimationMixer(root);
     this.actions = selectedClips.map((clip) => {
-      const action = this.mixer.clipAction(clip);
+      const action = this.mixer.clipAction(clip, root);
       action.reset();
       action.setLoop(THREE.LoopRepeat, Infinity);
       action.setEffectiveTimeScale(this.data.timeScale);
@@ -61,9 +64,62 @@ AFRAME.registerComponent('play-model-animation', {
     });
   },
 
+  getAnimationClips(root) {
+    const sources = [
+      root?.animations,
+      root?.geometry?.animations,
+      this.el.components?.['gltf-model']?.model?.animations,
+      this.el.getObject3D('mesh')?.animations,
+    ];
+
+    const clips = [];
+    const seen = new Set();
+    sources.flat().filter(Boolean).forEach((clip) => {
+      if (seen.has(clip)) return;
+      seen.add(clip);
+      clips.push(clip);
+    });
+
+    return clips;
+  },
+
+  selectClips(clips) {
+    const exact = clips.filter((clip) => clip.name === this.data.clip);
+    if (exact.length) return exact;
+
+    const normalizedTarget = this.data.clip.toLowerCase();
+    return clips.filter((clip) => clip.name?.toLowerCase() === normalizedTarget);
+  },
+
+  prepareAnimatedMeshes(root) {
+    const skinnedBaseNames = new Set();
+
+    root.traverse((node) => {
+      if (!node.isMesh) return;
+      node.frustumCulled = false;
+      if (node.isSkinnedMesh) {
+        skinnedBaseNames.add(node.name.replace(/\.001$/, ''));
+        node.visible = true;
+      }
+    });
+
+    root.traverse((node) => {
+      if (!node.isMesh || node.isSkinnedMesh) return;
+      if (skinnedBaseNames.has(node.name)) {
+        node.visible = false;
+        console.log(`🙈 Hiding static duplicate mesh "${node.name}" so the skinned animation is visible`);
+      }
+    });
+  },
+
   tick(time, deltaTime) {
     if (!this.mixer || !deltaTime) return;
     this.mixer.update(deltaTime / 1000);
+
+    if (time - this.lastDebugTime > 2000 && this.actions.length) {
+      this.lastDebugTime = time;
+      console.log(`⏱ Animation mixer running: ${this.actions.length} action(s), first time ${this.actions[0].time.toFixed(2)}s`);
+    }
   },
 
   remove() {
